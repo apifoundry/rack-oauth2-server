@@ -62,8 +62,8 @@ module Rack
 
       def self.registered(base)
         base.helpers Helpers
-        base.set :oauth2, Server.options
-        base.use Server, base.settings.oauth2
+        base.set :oauth, Server.options
+        base.use Server, base.settings.oauth
       end
 
     end
