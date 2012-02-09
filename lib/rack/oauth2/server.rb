@@ -166,7 +166,7 @@ module Rack
       #     user if user && user.authenticated?(password)
       #   end
       Options = Struct.new(:access_token_path, :authenticator, :authorization_types,
-        :authorize_path, :database, :database_adapter, :host, :param_authentication, :path, :realm, 
+        :authorize_path, :database, :database_adapter, :host, :param_authentication, :path, :realm,
         :expires_in,:logger)
 
       # Global options. This is what we set during configuration (e.g. Rails'
@@ -206,7 +206,7 @@ module Rack
         # 5.  Accessing a Protected Resource
         if request.authorization
           # 5.1.1.  The Authorization Request Header Field
-          token = request.credentials if request.oauth?
+          token = request.credentials if request.oauth? or request.bearer?
         elsif options.param_authentication && !request.GET["oauth_verifier"] # Ignore OAuth 1.0 callbacks
           # 5.1.2.  URI Query Parameter
           # 5.1.3.  Form-Encoded Body Parameter
@@ -405,7 +405,7 @@ module Rack
         rescue OAuthError=>error
           logger.error "RO2S: Access token request error #{error.code}: #{error.message}" if logger
           return unauthorized(request, error) if InvalidClientError === error && request.basic?
-          return [400, { "Content-Type"=>"application/json", "Cache-Control"=>"no-store" }, 
+          return [400, { "Content-Type"=>"application/json", "Cache-Control"=>"no-store" },
                   [{ :error=>error.code, :error_description=>error.message }.to_json]]
         end
       end
@@ -432,11 +432,11 @@ module Rack
 
 #        rescue ActiveRecord::RecordNotFound
 #          raise InvalidClientError
-        
-        
+
+
      # rescue BSON::InvalidObjectId => e
        #   raise InvalidClientError
-        
+
       end
 
       # Rack redirect response.
@@ -472,6 +472,11 @@ module Rack
           authorization[/^oauth/i] if authorization
         end
 
+        # True if authentication scheme is Bearer (OAuth).
+        def bearer?
+          authorization[/^bearer/i] if authorization
+        end
+
         # True if authentication scheme is Basic.
         def basic?
           authorization[/^basic/i] if authorization
@@ -482,6 +487,7 @@ module Rack
         def credentials
           basic? ? authorization.gsub(/\n/, "").split[1].unpack("m*").first.split(/:/, 2) :
           oauth? ? authorization.gsub(/\n/, "").split[1] : nil
+          bearer? ? authorization.gsub(/\n/, "").split[1] : nil
         end
       end
 
