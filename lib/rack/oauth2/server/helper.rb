@@ -69,7 +69,7 @@ module Rack
           @response["oauth.no_access"] = "true"
           @response.status = 401
         end
-        
+
         # Rejects the request and returns 403 (Forbidden). You can just
         # return 403, but this also sets the WWW-Authenticate header the right
         # value. Indicates which scope the client needs to make this request.
@@ -138,6 +138,10 @@ module Rack
         def inspect
           authorization ? "Authorization request for #{scope.join(",")} on behalf of #{client.display_name}" :
           authenticated? ? "Authenticated as #{identity}" : nil
+        end
+
+        def scope_meanings
+          Rack::OAuth2::Server.options.scope_meanings
         end
 
       end
